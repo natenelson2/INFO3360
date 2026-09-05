@@ -253,5 +253,3 @@ Stakeholders get at the end of this sprint
 ### Next sprint topic
 
 - Wire richer directory filters (e.g. player status, game date window) and swap static mocks for a real read-only data source—still no auth unless ops explicitly adds it later
-
-node -v
