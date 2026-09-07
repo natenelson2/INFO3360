@@ -1,6 +1,23 @@
-node_modules
-.DS_Store
-dist
+# Dependencies
+node_modules/
+
+# Build / framework output (TanStack Start + Vite)
+dist/
+dist-ssr/
+.output/
+.vinxi/
+.nitro/
+.tanstack/
+.wrangler/
+.vercel/
+__unconfig*
+
+# Never commit real env files (Sprint 2 will add .env.example only)
 .env
-.tanstack
-.output
+.env.local
+.env.*.local
+
+# OS / editor / logs
+.DS_Store
+*.log
+todos.json
