@@ -7,13 +7,9 @@ import {
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
+import { AppNav } from '../components/AppNav'
 import appCss from '../styles.css?url'
 
-/**
- * __root.tsx = top-level layout for the whole app.
- * Child pages render inside <Outlet />.
- * No player tables or fetch logic here yet.
- */
 export const Route = createRootRoute({
   head: () => ({
     meta: [
@@ -40,9 +36,11 @@ function RootLayout() {
           Hockey Ops Directory
         </p>
         <p className="text-sm text-slate-600">
-          Shared layout shell. Page routes and nav links come next.
+          Staff player directory and schedule shells for arena wifi use.
         </p>
       </header>
+
+      <AppNav />
 
       <main className="px-6 py-6">
         <Outlet />
