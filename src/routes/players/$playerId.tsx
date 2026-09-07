@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { parsePlayerIdParam } from '../../lib/playerParams'
+import { getPlayerById } from '../../server/directoryLoader'
 
 export const Route = createFileRoute('/players/$playerId')({
   params: {
@@ -10,14 +11,18 @@ export const Route = createFileRoute('/players/$playerId')({
       playerId: String(playerId),
     }),
   },
+  loader: async ({ params }) => {
+    const player = getPlayerById(params.playerId)
+    return { player, playerId: params.playerId }
+  },
   component: PlayerDetailPage,
 })
 
 function PlayerDetailPage() {
-  const { playerId } = Route.useParams()
+  const { player, playerId } = Route.useLoaderData()
 
   return (
-    <main>
+    <main className="mx-auto max-w-3xl p-6">
       <p className="mb-4 text-sm">
         <Link
           to="/players"
@@ -26,17 +31,47 @@ function PlayerDetailPage() {
           ← Back to players
         </Link>
       </p>
-      <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-        Player detail
-      </h1>
-      <p className="mt-2 text-slate-700">
-        Bookmarkable sheet for player{' '}
-        <span className="font-mono font-medium text-slate-900">{playerId}</span>
-      </p>
-      <p className="mt-4 text-sm text-slate-500">
-        Roster fields and server-loaded stats land in a later step. This shell
-        proves the path param works for hockey ops links.
-      </p>
+
+      {player ? (
+        <>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+            #{player.number} {player.name}
+          </h1>
+          <p className="mt-2 text-slate-700">
+            Bookmarkable sheet for player{' '}
+            <span className="font-mono font-medium text-slate-900">
+              {player.id}
+            </span>
+          </p>
+          <dl className="mt-4 space-y-1 text-sm text-slate-700">
+            <div>
+              <dt className="inline font-medium">Position: </dt>
+              <dd className="inline">{player.position}</dd>
+            </div>
+            <div>
+              <dt className="inline font-medium">Roster status: </dt>
+              <dd className="inline">{player.status}</dd>
+            </div>
+            <div>
+              <dt className="inline font-medium">Team: </dt>
+              <dd className="inline">{player.team}</dd>
+            </div>
+          </dl>
+        </>
+      ) : (
+        <>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+            Player not found
+          </h1>
+          <p className="mt-2 text-slate-700">
+            No roster entry for id{' '}
+            <span className="font-mono font-medium text-slate-900">
+              {playerId}
+            </span>
+            . Check the players list for a valid bookmark.
+          </p>
+        </>
+      )}
     </main>
   )
 }
