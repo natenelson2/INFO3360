@@ -15,6 +15,11 @@ export type GamesSearch = {
   team: string
   /** Empty string or YYYY-MM-DD */
   date: string
+  /**
+   * Optional roster context from a player detail cross-link (seed id, e.g. "p-17").
+   * Empty string means no player context. Does not invent new id formats.
+   */
+  playerId: string
 }
 
 const PLAYER_POSITIONS = new Set(['F', 'D', 'G', 'all'])
@@ -29,6 +34,7 @@ export const defaultPlayersSearch = (): PlayersSearch => ({
 export const defaultGamesSearch = (): GamesSearch => ({
   team: '',
   date: '',
+  playerId: '',
 })
 
 /**
@@ -60,5 +66,8 @@ export function validateGamesSearch(raw: Record<string, unknown>): GamesSearch {
     typeof raw.team === 'string' ? raw.team.trim().toUpperCase() : defaults.team
   const dateRaw = typeof raw.date === 'string' ? raw.date.trim() : ''
   const date = /^\d{4}-\d{2}-\d{2}$/.test(dateRaw) ? dateRaw : defaults.date
-  return { team, date }
+  const playerIdRaw =
+    typeof raw.playerId === 'string' ? raw.playerId.trim() : ''
+  const playerId = playerIdRaw || defaults.playerId
+  return { team, date, playerId }
 }

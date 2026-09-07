@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { NotFoundPlayer } from '../../components/NotFoundPlayer'
 import { parsePlayerIdParam } from '../../lib/playerParams'
 import { getPlayerById } from '../../server/directoryLoader'
 
@@ -57,20 +58,18 @@ function PlayerDetailPage() {
               <dd className="inline">{player.team}</dd>
             </div>
           </dl>
-        </>
-      ) : (
-        <>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-            Player not found
-          </h1>
-          <p className="mt-2 text-slate-700">
-            No roster entry for id{' '}
-            <span className="font-mono font-medium text-slate-900">
-              {playerId}
-            </span>
-            . Check the players list for a valid bookmark.
+          <p className="mt-6 text-sm">
+            <Link
+              to="/games"
+              search={{ team: '', date: '', playerId: player.id }}
+              className="font-medium text-sky-700 underline underline-offset-2"
+            >
+              View schedule (context: {player.name} / {player.id})
+            </Link>
           </p>
         </>
+      ) : (
+        <NotFoundPlayer playerId={playerId} />
       )}
     </main>
   )
