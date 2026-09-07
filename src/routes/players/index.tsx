@@ -19,16 +19,12 @@ function PlayersIndexPage() {
         detail sheet.
       </p>
       <ul className="mt-4 list-disc space-y-2 pl-5 text-slate-700">
-        {demoPlayers.map((player) => (
-          <li key={player.id}>
-            <Link
-              to="/players/$playerId"
-              params={{ playerId: player.id }}
-              className="font-medium text-slate-800 underline decoration-slate-300 underline-offset-4 hover:text-slate-950"
-            >
-              {player.name}
+        {demoPlayers.map((p) => (
+          <li key={p.id}>
+            <Link to="/players/$playerId" params={{ playerId: p.id }}>
+              {p.name}
             </Link>
-            <span className="text-slate-500"> — #{player.id}</span>
+            <span className="text-slate-500"> — #{p.id}</span>
           </li>
         ))}
       </ul>
