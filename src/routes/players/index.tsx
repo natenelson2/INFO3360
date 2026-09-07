@@ -1,21 +1,36 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/players/')({
   component: PlayersIndexPage,
 })
+
+const demoPlayers = [
+  { id: '42', name: 'Avery Skater' },
+  { id: '7', name: 'Riley Goalie' },
+  { id: '19', name: 'Jordan Winger' },
+]
 
 function PlayersIndexPage() {
   return (
     <main className="mx-auto max-w-3xl p-6">
       <h1 className="text-2xl font-bold text-slate-900">Players</h1>
       <p className="mt-2 text-slate-600">
-        Roster directory index for hockey operations staff. Each player will
-        get a bookmarkable detail page next.
+        Staff directory for the active roster. Open a player for a bookmarkable
+        detail sheet.
       </p>
-      <ul className="mt-4 list-disc space-y-1 pl-5 text-slate-700">
-        <li>Placeholder player row — A. Forward</li>
-        <li>Placeholder player row — B. Defense</li>
-        <li>Placeholder player row — C. Goalie</li>
+      <ul className="mt-4 list-disc space-y-2 pl-5 text-slate-700">
+        {demoPlayers.map((player) => (
+          <li key={player.id}>
+            <Link
+              to="/players/$playerId"
+              params={{ playerId: player.id }}
+              className="font-medium text-slate-800 underline decoration-slate-300 underline-offset-4 hover:text-slate-950"
+            >
+              {player.name}
+            </Link>
+            <span className="text-slate-500"> — #{player.id}</span>
+          </li>
+        ))}
       </ul>
     </main>
   )
