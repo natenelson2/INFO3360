@@ -37,14 +37,15 @@ export type Database = {
           created_at?: string | null
         }
         Update: {
-          id?: string
-          full_name?: string
-          position?: string | null
-          team_name?: string | null
-          jersey_number?: number | null
-          is_active?: boolean | null
-          created_at?: string | null
-        }
+  id?: string
+  full_name?: string
+  position?: string | null
+  team_name?: string | null
+  jersey_number?: number | null
+  is_active?: boolean | null
+  notes?: string | null
+  created_at?: string | null
+}
         Relationships: []
       }
       games: {
