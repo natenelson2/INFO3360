@@ -17,6 +17,7 @@ export type Database = {
     Tables: {
       players: {
         Row: {
+	  notes: string | null
           id: string
           full_name: string
           position: string | null
@@ -26,6 +27,7 @@ export type Database = {
           created_at: string | null
         }
         Insert: {
+	  notes?: string | null
           id?: string
           full_name: string
           position?: string | null
