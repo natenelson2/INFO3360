@@ -128,7 +128,19 @@ export type Database = {
       }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+   Functions: {
+  player_event_counts_for_game: {
+    Args: {
+      p_game_id: string
+    }
+    Returns: {
+      player_id: string
+      player_name: string
+      event_count: number
+      goal_count: number
+    }[]
+  }
+}
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
   }
