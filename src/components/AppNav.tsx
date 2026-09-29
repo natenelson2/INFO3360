@@ -24,6 +24,14 @@ export function AppNav() {
         Home
       </Link>
       <Link
+        to="/directory"
+        className={inactiveClass}
+        activeOptions={{ exact: false }}
+        activeProps={{ className: activeClass }}
+      >
+        Directory
+      </Link>
+      <Link
         to="/players"
         className={inactiveClass}
         activeOptions={{ exact: false }}
@@ -38,6 +46,30 @@ export function AppNav() {
         activeProps={{ className: activeClass }}
       >
         Games
+      </Link>
+      <Link
+        to="/scouting/players"
+        className={inactiveClass}
+        activeOptions={{ exact: false }}
+        activeProps={{ className: activeClass }}
+      >
+        Scout players
+      </Link>
+      <Link
+        to="/scouting/events"
+        className={inactiveClass}
+        activeOptions={{ exact: false }}
+        activeProps={{ className: activeClass }}
+      >
+        Scout events
+      </Link>
+      <Link
+        to="/scouting/aggregates"
+        className={inactiveClass}
+        activeOptions={{ exact: false }}
+        activeProps={{ className: activeClass }}
+      >
+        Scout aggregates
       </Link>
     </nav>
   )
