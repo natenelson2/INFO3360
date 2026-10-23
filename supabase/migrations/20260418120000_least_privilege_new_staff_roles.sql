@@ -17,17 +17,19 @@
 --   sports_science_records, practice_or_game_plans, players, games, events
 --
 -- Database views touched:
---   none — the audit listed no CREATE VIEW / no view names.
---   This migration does NOT invent a new business view.
+--   public.players_shared_identity
+--   (new shared view required so assistant_scout and video_analyst cannot
+--   read players.notes; row RLS alone cannot hide a column)
 --
--- Medical / sports-science columns that any shared scouting or game view
--- must omit if one is added later (from audit + matrix sealed rule):
---   sports_science_records.measure_label
+-- Columns this shared view MUST omit (sealed / matrix Deny):
+--   players.notes
+--   sports_science_records.measure_label  (not on players; never selected here)
 --   sports_science_records.measure_value
 --   sports_science_records.notes
---   players.notes  (free-text player-card notes; not shared identity)
---   Seed / app roster status "ir" (audit shared-screen medical flag; not a
---   Postgres column in migrations — enforce in app screens, not invent here)
+--   any injury / "ir" / medical-flag column (none exist on players in schema)
+--
+-- Columns this shared view lists by name (allowed identity only):
+--   id, full_name, position, team_name, jersey_number, is_active, created_at
 --
 -- Server functions touched (audit-listed names only):
 --   public.current_staff_role()
@@ -152,13 +154,15 @@ CREATE POLICY "scouting_notes_select_video_analyst_caseload"
 -- (policies from 20250321000000_hockey_staff_rls.sql left in place)
 
 -- ---------------------------------------------------------------------------
--- 5) players — shared identity SELECT for new jobs; keep coaching/scouting/medical.
---    Matrix: assistant_scout and video_analyst Deny on players.notes column.
---    Audit listed no database view to replace, so this file does not CREATE VIEW
---    and does not SELECT *. App queries for those roles must omit players.notes.
+-- 5) players — matrix Deny on players.notes for assistant_scout and video_analyst.
+--    Row policies cannot hide a column, so those two roles are NOT on the base
+--    table SELECT policy. They read public.players_shared_identity instead,
+--    which lists allowed identity columns by name and omits players.notes
+--    (and never selects sports-science columns).
 -- ---------------------------------------------------------------------------
 
--- Role: coaching, scouting, medical, assistant_scout, video_analyst | Action: See shared identity | Data: players rows
+-- Role: coaching, scouting, medical | Action: See | Data: base players (unchanged staff set)
+-- assistant_scout and video_analyst intentionally omitted (must use the view).
 DROP POLICY IF EXISTS "players_select_staff_roles" ON public.players;
 CREATE POLICY "players_select_staff_roles"
   ON public.players
@@ -168,13 +172,38 @@ CREATE POLICY "players_select_staff_roles"
     public.current_staff_role() IN (
       'coaching',
       'scouting',
-      'medical',
-      'assistant_scout',
-      'video_analyst'
+      'medical'
     )
   );
 
 -- No INSERT/UPDATE/DELETE policies on players for staff (unchanged deny writes).
+
+-- Shared identity view: column list by name; omits players.notes and all
+-- sports-science / medical-flag fields. Default view access uses the view
+-- owner's rights on the underlying table so assistant_scout / video_analyst
+-- do not need (and do not get) base-table SELECT that would expose notes.
+DROP VIEW IF EXISTS public.players_shared_identity;
+CREATE VIEW public.players_shared_identity AS
+SELECT
+  p.id,
+  p.full_name,
+  p.position,
+  p.team_name,
+  p.jersey_number,
+  p.is_active,
+  p.created_at
+FROM public.players p
+WHERE public.current_staff_role() IN (
+  'assistant_scout',
+  'video_analyst'
+);
+
+REVOKE ALL ON TABLE public.players_shared_identity FROM anon;
+GRANT SELECT ON TABLE public.players_shared_identity TO authenticated;
+
+-- Role: assistant_scout | Action: See identity only via view | Data: players_shared_identity
+-- Role: video_analyst | Action: See identity only via view | Data: players_shared_identity
+-- (enforced by the view's WHERE + column list; not by app-side "omit notes")
 
 -- ---------------------------------------------------------------------------
 -- 6) games and events — enable RLS (audit: who-can was unknown / no policies).
