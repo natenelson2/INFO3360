@@ -3,12 +3,14 @@ info:
   title: Hockey Event Ingestion API
   version: "1.0.0"
   description: >
-    Provider-facing contract for pushing hockey game events.
+    Contract for provider game-event create and coach evaluation-form create.
     Source of truth: docs/api/resource-design.md and
     docs/api/error-and-status-model.md.
-    Event resource only in this file — no evaluation, coach-form, auth, or admin paths.
-    Field names who / what / when come from the inventory plain-language inputs;
-    providerEventId and period are the working names from the error-and-status model.
+    No auth or admin paths. Event paths and schemas stay as originally defined;
+    evaluation paths were added without renaming the event half.
+    Event fields: who / what / when, providerEventId, period.
+    Evaluation fields: player, practiceContext, notes (player, practice
+    context, judgment/notes from the resource design / inventory).
 
 paths:
   /game-events:
@@ -52,6 +54,53 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "409":
           description: Conflict — providerEventId already stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed — JSON parsed but one or more fields failed rules
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /evaluation-forms:
+    post:
+      summary: Create one coach evaluation form (coach handoff)
+      operationId: createEvaluationForm
+      description: >
+        Coach submits a player evaluation after practice.
+        Success stores a new evaluation and returns 201 with the created resource.
+        Failures never return 200 with a success flag set to false.
+        Conflict (409) is not used for this operation per the status-code map.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvaluationForm"
+      responses:
+        "201":
+          description: Evaluation accepted and created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvaluationFormResponse"
+        "400":
+          description: Malformed request — body missing, not JSON, or otherwise unusable HTTP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing identity — no valid credentials on the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden — identity is valid but this caller may not create evaluation forms
           content:
             application/json:
               schema:
@@ -191,10 +240,61 @@ components:
       type: object
       description: >
         Shared structured error envelope from docs/api/error-and-status-model.md.
-        Used for every non-success response on this path.
+        Used for every non-success response on event and evaluation paths.
       required:
         - error
       properties:
         error:
           $ref: "#/components/schemas/ErrorBody"
       additionalProperties: false
+
+    EvaluationForm:
+      type: object
+      description: >
+        Request body for POST /evaluation-forms (coach handoff).
+        Required fields from the resource design / inventory: player,
+        practice context, and judgment/notes.
+      additionalProperties: false
+      required:
+        - player
+        - practiceContext
+        - notes
+      properties:
+        player:
+          type: string
+          description: Which player the evaluation is about
+          minLength: 1
+        practiceContext:
+          type: string
+          description: Practice context tying the judgment to that session
+          minLength: 1
+        notes:
+          type: string
+          description: Coach judgment and notes for the player
+          minLength: 1
+
+    EvaluationFormResponse:
+      type: object
+      description: >
+        Stored evaluation returned on 201 — server id plus accepted fields
+        (docs/api/error-and-status-model.md success body).
+      additionalProperties: false
+      required:
+        - evaluationId
+        - player
+        - practiceContext
+        - notes
+      properties:
+        evaluationId:
+          type: string
+          description: Server-assigned id for the stored evaluation
+          minLength: 1
+        player:
+          type: string
+          minLength: 1
+        practiceContext:
+          type: string
+          minLength: 1
+        notes:
+          type: string
+          minLength: 1
