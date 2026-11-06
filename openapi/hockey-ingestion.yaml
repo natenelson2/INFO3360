@@ -1,0 +1,200 @@
+openapi: "3.0.3"
+info:
+  title: Hockey Event Ingestion API
+  version: "1.0.0"
+  description: >
+    Provider-facing contract for pushing hockey game events.
+    Source of truth: docs/api/resource-design.md and
+    docs/api/error-and-status-model.md.
+    Event resource only in this file — no evaluation, coach-form, auth, or admin paths.
+    Field names who / what / when come from the inventory plain-language inputs;
+    providerEventId and period are the working names from the error-and-status model.
+
+paths:
+  /game-events:
+    post:
+      summary: Create one hockey game event (provider handoff)
+      operationId: createHockeyEvent
+      description: >
+        Third-party hockey data provider pushes one game event.
+        Success stores a new event and returns 201 with the created resource.
+        Failures never return 200 with a success flag set to false.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HockeyEvent"
+      responses:
+        "201":
+          description: Event accepted and created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HockeyEventResponse"
+        "400":
+          description: Malformed request — body missing, not JSON, or otherwise unusable HTTP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing identity — no valid credentials on the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden — identity is valid but this caller may not create game events
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Conflict — providerEventId already stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed — JSON parsed but one or more fields failed rules
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    HockeyEvent:
+      type: object
+      description: Request body for POST /game-events (provider handoff)
+      required:
+        - providerEventId
+        - period
+        - who
+        - what
+        - when
+      properties:
+        providerEventId:
+          type: string
+          description: >
+            Provider's unique id for this event. Duplicate values collide with
+            stored data and return 409 CONFLICT.
+          minLength: 1
+        period:
+          type: string
+          description: >
+            Game period for the event. Must be present and valid
+            (1, 2, 3, or OT per the status-model examples).
+          minLength: 1
+        who:
+          type: string
+          description: Who the event is about (inventory plain-language input)
+          minLength: 1
+        what:
+          type: string
+          description: What happened (inventory plain-language input)
+          minLength: 1
+        when:
+          type: string
+          description: When it happened within the game context (inventory plain-language input)
+          minLength: 1
+      additionalProperties: false
+
+    HockeyEventResponse:
+      type: object
+      description: >
+        Created game-event resource returned on 201 — server id plus accepted fields
+        (docs/api/error-and-status-model.md success body).
+      required:
+        - eventId
+        - providerEventId
+        - period
+        - who
+        - what
+        - when
+      properties:
+        eventId:
+          type: string
+          description: Server-assigned id for the stored event
+          minLength: 1
+        providerEventId:
+          type: string
+          minLength: 1
+        period:
+          type: string
+          minLength: 1
+        who:
+          type: string
+          minLength: 1
+        what:
+          type: string
+          minLength: 1
+        when:
+          type: string
+          minLength: 1
+      additionalProperties: false
+
+    ErrorDetail:
+      type: object
+      description: One field-level problem inside ErrorResponse.error.details
+      required:
+        - field
+        - code
+        - message
+      properties:
+        field:
+          type: string
+          description: >
+            Dot path into the request body, or empty string when not field-specific
+        code:
+          type: string
+          description: Machine-readable detail code (for example REQUIRED, DUPLICATE, OUT_OF_RANGE)
+        message:
+          type: string
+          description: What the integrator should change
+      additionalProperties: false
+
+    ErrorBody:
+      type: object
+      description: Inner error object from the shared status-model envelope
+      required:
+        - code
+        - message
+        - details
+      properties:
+        code:
+          type: string
+          description: >
+            Stable SCREAMING_SNAKE_CASE token — MALFORMED_REQUEST, UNAUTHENTICATED,
+            FORBIDDEN, CONFLICT, or VALIDATION_FAILED for this operation's errors
+          enum:
+            - MALFORMED_REQUEST
+            - UNAUTHENTICATED
+            - FORBIDDEN
+            - NOT_FOUND
+            - CONFLICT
+            - VALIDATION_FAILED
+        message:
+          type: string
+          description: Short human summary of the whole failure (never the only info on 422)
+        details:
+          type: array
+          description: >
+            Always an array. Empty for 401/403 when no field applies.
+            One or more entries for every 422, and for 409 when a field caused the collision.
+          items:
+            $ref: "#/components/schemas/ErrorDetail"
+      additionalProperties: false
+
+    ErrorResponse:
+      type: object
+      description: >
+        Shared structured error envelope from docs/api/error-and-status-model.md.
+        Used for every non-success response on this path.
+      required:
+        - error
+      properties:
+        error:
+          $ref: "#/components/schemas/ErrorBody"
+      additionalProperties: false
