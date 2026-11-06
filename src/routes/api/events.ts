@@ -1,8 +1,9 @@
 // Thin POST handler for provider game-event create.
-// Parses JSON, runs validateEventPayload, returns contract statuses.
-// Not allowed: database writes, authentication checks, or a second copy of schema rules.
+// Parses JSON, runs validateEventPayload, then saves via game-event-store
+// (idempotent on providerEventId per docs/ingestion/storage-rule.md).
 
 import { createFileRoute } from '@tanstack/react-router'
+import { saveGameEvent } from '../../server/ingestion/game-event-store'
 import { validateEventPayload } from '../../server/validation/event-payload'
 import { toFieldErrors, type FieldError } from '../../server/validation/field-errors'
 
@@ -56,15 +57,22 @@ export const Route = createFileRoute('/api/events')({
           )
         }
 
-        // Stub success body — invented id + accepted resource. No database.
+        const saved = saveGameEvent(result.data)
+        if (!saved.ok) {
+          // Provider outage / failed write — never report success if not stored.
+          return jsonError(500, 'WRITE_FAILED', saved.message, [])
+        }
+
+        // First create, exact replay, and late correction all return the original
+        // success shape (201). Replay does not insert a second row.
         return Response.json(
           {
-            eventId: `evt-stub-${result.data.providerEventId}`,
-            providerEventId: result.data.providerEventId,
-            period: result.data.period,
-            who: result.data.who,
-            what: result.data.what,
-            when: result.data.when,
+            eventId: saved.event.eventId,
+            providerEventId: saved.event.providerEventId,
+            period: saved.event.period,
+            who: saved.event.who,
+            what: saved.event.what,
+            when: saved.event.when,
           },
           { status: 201 },
         )

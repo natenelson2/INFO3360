@@ -17,6 +17,9 @@ __unconfig*
 .env.local
 .env.*.local
 
+# Local ingested event store (idempotent game-event persistence)
+.data/
+
 # OS / editor / logs
 .DS_Store
 *.log
