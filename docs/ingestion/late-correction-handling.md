@@ -27,7 +27,11 @@ Team goal total after the correction (must stay one):
 
 ## Storage rule
 
-When the same `providerEventId` arrives again with changed goal details, the app replaces the stored details for that key. It does not insert a second goal. Stats must match the corrected facts, so the wrong scorer is removed and the correct scorer has the one goal.
+When the same `providerEventId` arrives again with changed goal details, the app replaces the stored details for that key.
+
+Known limitation on which corrected copy is newest: the store does not use a provider version or sequence number; the latest arrival wins, so an older delayed copy can overwrite a newer correction if it shows up later.
+
+ It does not insert a second goal. Stats must match the corrected facts, so the wrong scorer is removed and the correct scorer has the one goal.
 
 Forbidden outcome 1, freezing the mistake:
 Leaving Player A with the goal after the correction arrives.
