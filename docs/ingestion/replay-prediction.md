@@ -1,7 +1,7 @@
 # Replay prediction (sealed before any replay)
 
 ## Seal
-- Written at:Saturday, Nov 7, 2026, 1:35 PM
+- Written at: Saturday, Nov 7, 2026, 1:35 PM
 - Written before any replay was run: yes
 - I did not send these deliveries, and I did not ask an agent to fill in the outcomes: yes
 
@@ -23,12 +23,12 @@
 ## Expected results (mine, from the rules, not from a run)
 | Label | Expected stored stat after this delivery | Expected response | Decision-table case | Storage-rule phrase |
 | --- | --- | --- | --- | --- |
-| D1 | Jordan scores a goal — open event-outcome-decision-table.md; this is a first new event | 201 success — use the replay promise above (first save) | first save | one new key → one stored event |
-| D2 | Same Jordan goal sent again after a timeout — look at Exact duplicate row; same key must not become a second goal | 201 success — use the replay promise above (replay) | duplicate | same key → do not insert again |
-| D3 | Later goal arrives first (Avery at 12:00) — new key, so it is saved | 201 success — use the replay promise above (first save) | first save | new key → keep it |
-| D4 | Earlier pass arrives after that later goal (Sam at 8:00) — look at Out-of-order arrival row | 201 success — use the replay promise above (first save of a new key) | out of order | new key late → keep it anyway |
+| D1 | Jordan’s 10:12 goal is stored once | 201 success | first save | one new key → one stored event |
+| D2 | Still one Jordan goal; the duplicate does not add a second goal | 201 success | duplicate | same key → do not insert again |
+| D3 | Avery’s 12:00 goal is also stored | 201 success | first save | new key → keep it |
+| D4 | Sam’s 8:00 pass is kept even though it arrived after Avery’s 12:00 goal | 201 success | out of order | new key late → keep it anyway |
 
 ## Snapshot after the whole list
-- Goals stored: count goals once; D1 and D2 are the same goal
-- Other events stored: say in plain words what stayed after the out-of-order pair
+- Goals stored: 2 (Jordan counted once, Avery counted once)
+- Other events stored: Avery’s 12:00 goal and Sam’s 8:00 pass both remained stored after the out-of-order pair
 - I did not run this list. There is no actual-result column.
